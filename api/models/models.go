@@ -2,14 +2,25 @@ package models
 
 import (
 	"time"
+
+	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
+type UUID uuid.UUID
+
 type User struct {
-	ID             uint `gorm:"primaryKey"`
-	FirstName      string
-	LastName       string
-	Email          string
-	HashPassword   string
-	AccountCreated time.Time
-	AccountUpdated time.Time
+	gorm.Model
+	FirstName    string
+	LastName     string
+	Email        string
+	HashPassword string
+}
+
+type Assignment struct {
+	gorm.Model
+	Name          string
+	Points        int
+	NumOfAttempts int
+	Deadline      time.Time
 }

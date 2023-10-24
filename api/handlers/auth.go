@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"github.com/srivardhanreddy01/webapplication_go/api/models"
+	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )
 
@@ -13,7 +14,7 @@ func AuthenticateUser(deps AuthHandlerDependencies, email string, password strin
 	var user models.User
 
 	// Query the database to retrieve user by email
-	result := deps.DB.Where("Email = ?", email).First(&user)
+	result := deps.DB.Where("email = ?", email).First(&user)
 
 	if result.Error != nil {
 		if result.Error == gorm.ErrRecordNotFound {
@@ -34,10 +35,10 @@ func AuthenticateUser(deps AuthHandlerDependencies, email string, password strin
 	return &user, nil
 }
 
-// comparePasswords compares the provided password with the stored password hash.
 func comparePasswords(storedHash, providedPassword string) bool {
-	// Implement your password comparison logic, for example using a library like bcrypt
-	// Compare the stored password hash with the provided password
-	// If they match, return true; otherwise, return false
-	return storedHash == providedPassword
+	err := bcrypt.CompareHashAndPassword([]byte(storedHash), []byte(providedPassword))
+	if err != nil {
+		return false // Passwords do not match
+	}
+	return true // Passwords match
 }

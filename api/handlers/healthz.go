@@ -5,30 +5,25 @@ import (
 	"fmt"
 	"net/http"
 
-	_ "github.com/go-sql-driver/mysql" // Import the MySQL driver
+	_ "github.com/go-sql-driver/mysql"
 )
 
-func isDatabaseHealthy() bool {
-	// Define your database connection parameters
-	dsn := "root:Sripragna$1@tcp(127.0.0.1:3306)/godatabase"
+func isDatabaseHealthy() (bool, error) {
+	dsn := "root:Sripragna$1@tcp(127.0.0.1:3306)/godatabase?parseTime=true"
 
-	// Attempt to open a connection to the database
 	db, err := sql.Open("mysql", dsn)
 	if err != nil {
-		fmt.Println("Error connecting to the database:", err)
-		return false
+		return false, err
 	}
 	defer db.Close()
 
-	// Try to ping the database to verify the connection
 	err = db.Ping()
 	if err != nil {
 		fmt.Println("Error pinging the database:", err)
-		return false
+		return false, nil
 	}
 
-	// If no errors occurred, the database connection is healthy
-	return true
+	return true, nil
 }
 
 func HealthzHandler(w http.ResponseWriter, r *http.Request) {
@@ -36,8 +31,13 @@ func HealthzHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
 	w.Header().Set("Pragma", "no-cache")
 
-	// Check database health
-	databaseIsHealthy := isDatabaseHealthy()
+	databaseIsHealthy, err := isDatabaseHealthy()
+
+	if err != nil {
+		fmt.Println("Error checking database health:", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
 
 	if databaseIsHealthy {
 		w.WriteHeader(http.StatusOK)

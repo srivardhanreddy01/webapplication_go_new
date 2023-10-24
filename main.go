@@ -2,33 +2,19 @@ package main
 
 import (
 	"encoding/csv"
-	"fmt"
 	"log"
 	"net/http"
 	"os"
-	"time"
 
+	"github.com/srivardhanreddy01/webapplication_go/api"
+	"github.com/srivardhanreddy01/webapplication_go/api/models"
+	endpoint "github.com/srivardhanreddy01/webapplication_go/cmd/endpoint"
 	"golang.org/x/crypto/bcrypt"
-
-	"github.com/srivardhanreddy01/webapplication_go/cmd/api" // Import your API package
+	"gorm.io/gorm"
 )
 
-type User struct {
-	first_name     string
-	last_name      string
-	email          string
-	hashPassword   string
-	AccountCreated time.Time
-	AccountUpdated time.Time
-}
-
 func main() {
-	log.Println("Starting the API server...")
-	err := http.ListenAndServe(":8081", api.NewRouter())
-	if err != nil {
-		log.Fatal("Server error:", err)
-	}
-
+	db := api.InitDB()
 	csvFile, err := os.Open("/opt/user.csv")
 	if err != nil {
 		log.Fatal(err)
@@ -41,51 +27,49 @@ func main() {
 		log.Fatal(err)
 	}
 
-	for _, record := range records {
+	users := []models.User{}
 
+	for _, record := range records {
 		firstname := record[0]
 		lastname := record[1]
 		email := record[2]
 		password := record[3]
 
-		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
-		if err != nil {
-			log.Fatal(err)
+		var existingUser models.User
+		result := db.Where("Email = ?", email).First(&existingUser)
+
+		if result.Error != nil && result.Error != gorm.ErrRecordNotFound {
+			log.Fatal(result.Error)
+		} else if result.Error == gorm.ErrRecordNotFound {
+
+			hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			// currentTime := time.Now()
+
+			user := models.User{
+				FirstName:    firstname,
+				LastName:     lastname,
+				Email:        email,
+				HashPassword: string(hashedPassword),
+				// AccountCreated: currentTime,
+				// AccountUpdated: currentTime,
+			}
+
+			users = append(users, user)
 		}
 
-		currentTime := time.Now()
-
-		user := User{
-			first_name:     firstname,
-			last_name:      lastname,
-			email:          email,
-			hashPassword:   string(hashedPassword),
-			AccountCreated: currentTime,
-			AccountUpdated: currentTime,
-		}
-
-		fmt.Print(user)
 	}
 
+	for _, user := range users {
+		db.Create(&user)
+	}
+
+	log.Println("Starting the API server...")
+	err = http.ListenAndServe(":8081", endpoint.NewRouter(db))
+	if err != nil {
+		log.Fatal("Server error:", err)
+	}
 }
-
-// package main
-
-// import (
-// 	"net/http"
-// 	"routes"
-
-// 	"github.com/gorilla/mux"
-// )
-
-// func main() {
-// 	r := mux.NewRouter()
-
-// 	// Set up healthz route
-// 	routes.SetHealthzRoute(r)
-
-// 	// Set up other routes as needed
-
-// 	http.Handle("/", r)
-// 	http.ListenAndServe(":8080", nil)
-// }
