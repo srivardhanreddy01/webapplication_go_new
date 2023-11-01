@@ -1,0 +1,57 @@
+name: CI/CD test
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  integration-test:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:latest
+        env:
+          MYSQL_ROOT_PASSWORD: Sripragna$1
+          MYSQL_DATABASE: 'godatabase'
+        ports:
+          - 3306:3306
+        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v2
+
+      - name: Set up Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.21.2
+
+      - name: Wait for MySQL to be ready
+        run: |
+          until nc -z -v -w30 localhost 3306
+          do
+            echo "Waiting for MySQL to be ready..."
+            sleep 5
+          done
+
+      - name: Install project dependencies
+        run: |
+          go get -d -v ./...
+          go build -v
+
+      - name: Run Integration tests
+        run: |
+          go test ./...
+
+      - name: Format Packer Template
+        run: packer fmt --check aws-debian.pkr.hcl
+        continue-on-error: false
+
+      - name: Validate Packer Template
+        run: packer validate aws-debian.pkr.hcl
+
+      - name: Build Packer image
+        run: packer build aws-debian.pkr.hcl
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}

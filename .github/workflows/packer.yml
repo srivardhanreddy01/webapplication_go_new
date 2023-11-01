@@ -1,0 +1,38 @@
+name: Packer Format and Validate 
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  packer_checks:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Building the artifacts
+      run: zip -r webapplication_go.zip ./
+
+    - name: Install Packer
+      run: |
+        curl -fsSL https://releases.hashicorp.com/packer/1.7.0/packer_1.7.0_linux_amd64.zip -o packer.zip
+        unzip packer.zip
+        sudo mv packer /usr/local/bin/
+        packer --version
+      if: success()
+
+    - name: List Files
+      run: ls
+
+    - name: Initialize Packer
+      run: packer init aws-debian.pkr.hcl
+
+    - name: Format Packer Template
+      run: packer fmt --check aws-debian.pkr.hcl
+      continue-on-error: false
+
+    - name: Validate Packer Template
+      run: packer validate aws-debian.pkr.hcl
