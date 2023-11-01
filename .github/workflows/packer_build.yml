@@ -43,12 +43,15 @@ jobs:
         run: |
           go test ./...
 
+      - name: Building the artifacts
+        run: zip -r webapplication_go.zip ./
+
       - name: Env
-        run: |
-          ls -ltr
-          env:
+        env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        run: |
+          ls -ltr
           cat .env
 
 
