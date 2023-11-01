@@ -27,6 +27,9 @@ jobs:
         echo "AWS_SECRET_ACCESS_KEY=${{ inputs.AWS_SECRET_ACCESS_KEY }}" >> .env
       shell: bash
 
+    - name: Build Artifacts
+      run: |
+          zip -r webapplication_go.zip ./
     - name: Install Packer
       run: |
         curl -fsSL https://releases.hashicorp.com/packer/1.7.0/packer_1.7.0_linux_amd64.zip -o packer.zip
