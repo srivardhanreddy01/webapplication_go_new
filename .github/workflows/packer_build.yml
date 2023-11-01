@@ -46,4 +46,6 @@ jobs:
       run: packer validate aws-debian.pkr.hcl
 
     - name: Build Packer image
-      run: packer build aws-debian.pkr.hcl
+      run: |
+       cat .env 
+       packer build aws-debian.pkr.hcl
