@@ -45,14 +45,18 @@ jobs:
 
       - name: Building the artifacts
         run: zip -r webapplication_go.zip ./
-
-      - name: Env
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        
+      - name: Create .env File
         run: |
-          ls -ltr
+          echo "AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}" > .env
+          echo "AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}" >> .env
+        shell: bash
+
+      - name: Display .env File
+        run: |
           cat .env
+        shell: bash
+
 
 
       - name: Initialize Packer
