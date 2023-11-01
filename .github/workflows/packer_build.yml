@@ -1,6 +1,9 @@
 name: Packer Format and Validate
 
 on:
+  push:
+    branches:
+      - main
   workflow_dispatch:
     inputs:
       AWS_ACCESS_KEY_ID:
