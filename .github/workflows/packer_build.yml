@@ -45,6 +45,7 @@ jobs:
 
       - name: Env
         run: |
+          ls -ltr
           cat .env
 
 
